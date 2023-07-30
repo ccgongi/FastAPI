@@ -1,11 +1,26 @@
 from fastapi import FastAPI
-import uvicorn
+from pydantic import BaseModel
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 
 app = FastAPI()
 
-@app.get("/")
-async def root():
-    return {"greeting": "Hello, World!", "message": "Dare is thgggge GOAT! jkjk"}
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-    
+anthropic = Anthropic(api_key="my api key") # replace with your actual key
+
+class Profile(BaseModel):
+    name: str
+    interests: str
+    location: str
+    # add other fields as needed
+
+@app.post("/match")
+async def match_profiles(profile: Profile):
+    # Here you might want to do some processing on the profile data to formulate a suitable prompt.
+    # This is a simplistic example where we just ask Claude-2 for a suitable match based on the interests.
+    prompt = f"{HUMAN_PROMPT} Who would be a suitable match for a person interested in {profile.interests}? {AI_PROMPT}"
+
+    completion = anthropic.completions.create(
+        model="claude-2",
+        max_tokens_to_sample=300,
+        prompt=prompt,
+    )
+    return {"match": completion.completion}
